@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>كم باقي؟</title>
+<!--
+  صفحة الهبوط لروابط مشاركة المناسبات.
+  الرابط: .../e.html#n=الاسم&d=2026-11-25&e=🎂&y=1
+  البيانات بعد # فلا تُرسل لأي خادم: تُقرأ هنا في المتصفح فقط.
+-->
+<style>
+  :root { --bg:#f6f4ef; --surface:#fff; --ink:#1c1b19; --muted:#6f6a62; --line:#e5e0d6; --accent:#1f7a4d; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#151614; --surface:#1f201d; --ink:#f1efe9; --muted:#a8a39a; --line:#33342f; --accent:#4fbf87; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+         font: 17px/1.7 system-ui, "Segoe UI", Tahoma, sans-serif; display: flex; align-items: center; justify-content: center; }
+  main { width: 100%; max-width: 420px; padding: 24px 16px 40px; text-align: center; }
+  .brand { font-weight: 800; font-size: 20px; margin-bottom: 18px; }
+  .card { border-radius: 26px; padding: 30px 20px 26px; color: #fff; background: linear-gradient(140deg, #1f7a4d, #0f4c33); }
+  .emoji { font-size: 54px; line-height: 1.2; }
+  .label { font-size: 18px; opacity: .9; margin-top: 6px; overflow-wrap: anywhere; }
+  .num { font-size: 84px; font-weight: 900; line-height: 1.1; }
+  .unit { font-size: 22px; font-weight: 700; }
+  .date { font-size: 14px; opacity: .8; margin-top: 12px; }
+  .btn { display: block; margin-top: 16px; padding: 15px; border-radius: 16px; font: inherit; font-weight: 800; text-decoration: none; }
+  .primary { background: var(--accent); color: #fff; }
+  .secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+  .note { color: var(--muted); font-size: 14px; margin-top: 16px; }
+  .ltr { direction: ltr; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">⏳ كم باقي؟</div>
+
+  <div id="event" hidden>
+    <div class="card">
+      <div class="emoji" id="emoji"></div>
+      <div class="label" id="label"></div>
+      <div class="num" id="num"></div>
+      <div class="unit" id="unit"></div>
+      <div class="date" id="date"></div>
+    </div>
+    <a class="btn primary" id="open">أضِفها إلى تطبيق «كم باقي؟»</a>
+    <a class="btn secondary" id="store" hidden>حمّل التطبيق</a>
+    <p class="note" id="noStore">إذا لم يفتح الزر شيئاً فالتطبيق غير مثبّت على هاتفك. سيتوفر قريباً على Google Play.</p>
+    <p class="note ltr" lang="en">Tap the button to add this countdown to the Kam Baqi? app.</p>
+  </div>
+
+  <div id="invalid" hidden>
+    <p>هذا الرابط غير مكتمل أو تالف.</p>
+    <p class="note">اطلب من صاحبه أن يشارك المناسبة من التطبيق مرة أخرى.</p>
+  </div>
+</main>
+
+<script>
+// رابط التطبيق في المتجر. اتركه فارغاً حتى يُنشر التطبيق، ثم ضعه هنا فيظهر زر «حمّل التطبيق».
+const STORE_URL = "";
+
+const p = new URLSearchParams(location.hash.slice(1));
+const name = (p.get("n") || "").replace(/\s+/g, " ").trim().slice(0, 30);
+const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.get("d") || "");
+const emoji = (p.get("e") || "").trim();
+const yearly = p.get("y") === "1";
+
+function show(id) { document.getElementById(id).hidden = false; }
+
+const base = m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+const valid = name && base && base.getMonth() === +m[2] - 1 && base.getDate() === +m[3];
+
+if (!valid) {
+  show("invalid");
+} else {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // المناسبة السنوية: موعدها القادم
+  let date = base;
+  if (yearly) {
+    date = new Date(today.getFullYear(), base.getMonth(), base.getDate());
+    if (date < today) date = new Date(today.getFullYear() + 1, base.getMonth(), base.getDate());
+  }
+  const days = Math.round((date - today) / 86400000);
+  const word = n => n === 1 ? "يوم واحد" : n === 2 ? "يومان" : n <= 10 ? "أيام" : "يوماً";
+
+  // textContent دائماً: الاسم يأتي من الرابط، فلا يُكتب أبداً كـHTML
+  document.getElementById("emoji").textContent = [...emoji].length && [...emoji].length <= 6 ? emoji : "⭐";
+  const label = document.getElementById("label"), num = document.getElementById("num"), unit = document.getElementById("unit");
+  if (days < 0) { label.textContent = name; num.textContent = "مضت"; num.style.fontSize = "52px"; }
+  else if (days === 0) { label.textContent = name; num.textContent = "اليوم!"; num.style.fontSize = "64px"; }
+  else if (days <= 2) { label.textContent = "باقي على " + name; num.textContent = word(days); num.style.fontSize = "52px"; }
+  else { label.textContent = "باقي على " + name; num.textContent = days; unit.textContent = word(days); }
+  document.getElementById("date").textContent =
+    new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date);
+  document.title = name + " · كم باقي؟";
+
+  // يفتح التطبيق على نافذة إضافة معبّأة بهذه المناسبة
+  const q = new URLSearchParams({ n: name, d: p.get("d"), e: emoji });
+  if (yearly) q.set("y", "1");
+  document.getElementById("open").href = "kambaqi://add?" + q.toString();
+
+  if (STORE_URL) {
+    document.getElementById("store").href = STORE_URL;
+    show("store");
+    document.getElementById("noStore").hidden = true;
+  }
+  show("event");
+}
+</script>
+</body>
+</html>
