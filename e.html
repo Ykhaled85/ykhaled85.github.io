@@ -66,7 +66,8 @@
 
   <div id="common" hidden>
     <a class="btn secondary" id="store" hidden>حمّل التطبيق</a>
-    <p class="note" id="noStore">إذا لم يفتح الزر شيئاً فالتطبيق غير مثبّت على هاتفك. سيتوفر قريباً على Google Play.</p>
+    <a class="btn secondary" id="store2" hidden></a>
+    <p class="note" id="noStore">إذا لم يكن التطبيق على هاتفك، ينقلك الزر إلى المتجر لتحمّله، ثم افتح الرابط مرة أخرى.</p>
     <p class="note ltr" lang="en">Tap the button to add this to the Kam Baqi? app.</p>
   </div>
 
@@ -77,8 +78,32 @@
 </main>
 
 <script>
-// رابط التطبيق في المتجر: يظهر زر «حمّل التطبيق» لمن ليس عنده التطبيق.
-const STORE_URL = "https://play.google.com/store/apps/details?id=com.YK.kambaqi";
+// روابط التطبيق في المتجرين. الصفحة تعرف نوع الجهاز وتعرض متجره.
+const PLAY_URL = "https://play.google.com/store/apps/details?id=com.YK.kambaqi";
+const APPSTORE_URL = "https://apps.apple.com/app/id6831896782";
+const ua = navigator.userAgent;
+// iPadOS يعرّف نفسه كـMac، ونميّزه بشاشة اللمس
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(ua);
+
+// يفتح التطبيق إن كان مثبّتاً، وإلا ينقل إلى المتجر.
+// Android: رابط intent، وChrome يفتح Google Play بنفسه إن لم يجد التطبيق.
+// iOS: نجرب فتح التطبيق، فإن بقيت الصفحة ظاهرة بعد لحظة فالتطبيق غير مثبّت، فننتقل إلى App Store.
+function wireOpen(a, query) {
+  if (isAndroid) {
+    a.href = "intent://add?" + query + "#Intent;scheme=kambaqi;package=com.YK.kambaqi;S.browser_fallback_url=" +
+      encodeURIComponent(PLAY_URL) + ";end";
+    return;
+  }
+  a.href = "kambaqi://add?" + query;
+  if (!isIOS) return;
+  a.addEventListener("click", () => {
+    const timer = setTimeout(() => { if (!document.hidden) location.href = APPSTORE_URL; }, 1600);
+    const cancel = () => { if (document.hidden) clearTimeout(timer); };
+    document.addEventListener("visibilitychange", cancel, { once: true });
+    window.addEventListener("pagehide", () => clearTimeout(timer), { once: true });
+  });
+}
 
 const GROUPS = { family: ["👨‍👩‍👧", "مناسبات العيلة"], work: ["💼", "مناسبات الشغل"], friends: ["🎉", "مناسبات الأصحاب"] };
 const MAX_GROUP = 30;
@@ -147,7 +172,7 @@ if (p.has("l")) {
     }
     document.title = title + " · كم باقي؟";
     // يفتح التطبيق على نافذة اختيار المناسبات. نمرّر البيانات كما وصلت، والتطبيق يتحقق منها بنفسه.
-    el("gOpen").href = "kambaqi://add?" + new URLSearchParams({ g: p.get("g") || "", l: p.get("l") }).toString();
+    wireOpen(el("gOpen"), new URLSearchParams({ g: p.get("g") || "", l: p.get("l") }).toString());
     show("group");
   }
 } else {
@@ -167,17 +192,24 @@ if (p.has("l")) {
     // يفتح التطبيق على نافذة إضافة معبّأة بهذه المناسبة
     const q = new URLSearchParams({ n: e.name, d: p.get("d"), e: e.emoji });
     if (p.get("y") === "1") q.set("y", "1");
-    el("open").href = "kambaqi://add?" + q.toString();
+    wireOpen(el("open"), q.toString());
     show("event");
   }
 }
 
 if (valid) {
-  if (STORE_URL) {
-    el("store").href = STORE_URL;
-    show("store");
-    el("noStore").hidden = true;
+  // زر التحميل: متجر الجهاز، وعلى الكمبيوتر المتجران معاً
+  const store = el("store"), store2 = el("store2");
+  if (isIOS) {
+    store.href = APPSTORE_URL; store.textContent = "حمّل التطبيق من App Store";
+  } else if (isAndroid) {
+    store.href = PLAY_URL; store.textContent = "حمّل التطبيق من Google Play";
+  } else {
+    store.href = PLAY_URL; store.textContent = "Google Play";
+    store2.href = APPSTORE_URL; store2.textContent = "App Store";
+    show("store2");
   }
+  show("store");
   show("common");
 } else {
   show("invalid");
