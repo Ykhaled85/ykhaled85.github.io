@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كم باقي؟ · حمّل التطبيق</title>
+<meta name="description" content="كم باقي؟ يعدّ لك الأيام للراتب ورمضان والعيد ومناسباتك.">
+<!--
+  رابط «شارك التطبيق» في التطبيق (lib/strings.dart: appShareUrl).
+  ينقل الآيفون إلى App Store والأندرويد إلى Google Play، ويعرض المتجرين على الكمبيوتر.
+-->
+<style>
+  :root { --bg:#f6f4ef; --ink:#1c1b19; --muted:#6f6a62; --line:#e5e0d6; --surface:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151614; --ink:#f1efe9; --muted:#a8a39a; --line:#33342f; --surface:#1f201d; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); display: flex; align-items: center; justify-content: center;
+         font: 17px/1.7 system-ui, "Segoe UI", Tahoma, sans-serif; }
+  main { width: 100%; max-width: 420px; padding: 24px 16px 40px; text-align: center; }
+  .card { border-radius: 26px; padding: 30px 20px; color: #fff; background: linear-gradient(140deg, #1f7a4d, #0f4c33); }
+  .logo { font-size: 54px; line-height: 1.2; }
+  h1 { margin: 6px 0 4px; font-size: 28px; }
+  p { margin: 0; opacity: .9; }
+  .btn { display: block; margin-top: 14px; padding: 15px; border-radius: 16px; font-weight: 800; text-decoration: none;
+         background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <div class="logo">⏳</div>
+    <h1>كم باقي؟</h1>
+    <p>يعدّ لك الأيام للراتب ورمضان والعيد ومناسباتك</p>
+  </div>
+  <a class="btn" id="ios" href="https://apps.apple.com/app/id6831896782">App Store</a>
+  <a class="btn" id="android" href="https://play.google.com/store/apps/details?id=com.YK.kambaqi&referrer=utm_source%3Dshare_app">Google Play</a>
+</main>
+<script>
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  const target = isIOS ? "ios" : isAndroid ? "android" : null;
+  if (target) location.replace(document.getElementById(target).href);
+</script>
+</body>
+</html>
