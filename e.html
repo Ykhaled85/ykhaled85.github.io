@@ -67,7 +67,7 @@
   <div id="common" hidden>
     <a class="btn secondary" id="store" hidden>حمّل التطبيق</a>
     <a class="btn secondary" id="store2" hidden></a>
-    <p class="note" id="noStore">إذا لم يكن التطبيق على هاتفك، ينقلك الزر إلى المتجر لتحمّله، ثم افتح الرابط مرة أخرى.</p>
+    <p class="note" id="noStore">إذا لم يكن التطبيق على هاتفك، ينقلك الزر إلى المتجر لتحمّله، وعند أول فتح للتطبيق تظهر لك هذه المناسبات لتضيفها.</p>
     <p class="note ltr" lang="en">Tap the button to add this to the Kam Baqi? app.</p>
   </div>
 
@@ -89,15 +89,27 @@ const isAndroid = /Android/.test(ua);
 // يفتح التطبيق إن كان مثبّتاً، وإلا ينقل إلى المتجر.
 // Android: رابط intent، وChrome يفتح Google Play بنفسه إن لم يجد التطبيق.
 // iOS: نجرب فتح التطبيق، فإن بقيت الصفحة ظاهرة بعد لحظة فالتطبيق غير مثبّت، فننتقل إلى App Store.
+//
+// إن لم يكن التطبيق مثبّتاً تصل المناسبة إليه بعد التثبيت (deep_links.dart: InstallLink):
+// Android: نضعها في معامل referrer لرابط Google Play، وPlay يسلّمها للتطبيق عند أول فتح.
+// iOS: ننسخ رابط هذه الصفحة إلى الحافظة، والتطبيق يقرؤه عند أول فتح (بعد أن يسأل iOS المستخدم).
+let shareQuery = "";
+const playUrl = () => shareQuery ? PLAY_URL + "&referrer=" + encodeURIComponent(shareQuery) : PLAY_URL;
+function copyLink() {
+  try { navigator.clipboard && navigator.clipboard.writeText(location.href).catch(() => {}); } catch (_) {}
+}
+
 function wireOpen(a, query) {
+  shareQuery = query;
   if (isAndroid) {
     a.href = "intent://add?" + query + "#Intent;scheme=kambaqi;package=com.YK.kambaqi;S.browser_fallback_url=" +
-      encodeURIComponent(PLAY_URL) + ";end";
+      encodeURIComponent(playUrl()) + ";end";
     return;
   }
   a.href = "kambaqi://add?" + query;
   if (!isIOS) return;
   a.addEventListener("click", () => {
+    copyLink(); // يجب أن يحدث أثناء الضغط نفسه، فالمتصفح لا يسمح بالنسخ لاحقاً
     const timer = setTimeout(() => { if (!document.hidden) location.href = APPSTORE_URL; }, 1600);
     const cancel = () => { if (document.hidden) clearTimeout(timer); };
     document.addEventListener("visibilitychange", cancel, { once: true });
@@ -202,8 +214,9 @@ if (valid) {
   const store = el("store"), store2 = el("store2");
   if (isIOS) {
     store.href = APPSTORE_URL; store.textContent = "حمّل التطبيق من App Store";
+    store.addEventListener("click", copyLink);
   } else if (isAndroid) {
-    store.href = PLAY_URL; store.textContent = "حمّل التطبيق من Google Play";
+    store.href = playUrl(); store.textContent = "حمّل التطبيق من Google Play";
   } else {
     store.href = PLAY_URL; store.textContent = "Google Play";
     store2.href = APPSTORE_URL; store2.textContent = "App Store";
