@@ -7,6 +7,8 @@
 <title>كم باقي؟</title>
 <!--
   صفحة الهبوط لروابط المشاركة من تطبيق «كم باقي؟».
+  الشكل المختصر (من 1.4.0): .../e#<base64url> — انظر uncompact في الأسفل.
+  الشكل القديم، ما زال يعمل:
   مناسبة واحدة: .../e.html#n=الاسم&d=2026-11-25&e=🎂&y=1
   مجموعة:       .../e.html#g=family&l=<قائمة JSON بترميز base64url: [[الاسم، التاريخ، الرمز، 1 للسنوية]، …]>
   البيانات بعد # فلا تُرسل لأي خادم: تُقرأ هنا في المتصفح فقط.
@@ -120,7 +122,61 @@ function wireOpen(a, query) {
 const GROUPS = { family: ["👨‍👩‍👧", "مناسبات العيلة"], work: ["💼", "مناسبات الشغل"], friends: ["🎉", "مناسبات الأصحاب"] };
 const MAX_GROUP = 30;
 
-const p = new URLSearchParams(location.hash.slice(1));
+// الرابط المختصر (…/e#<base64url>): نفس الترميز في lib/logic/share_link.dart، فأي تعديل هناك يُعدَّل هنا.
+// نحوّله إلى الشكل القديم (n،d،e،y أو g،l)، فيبقى باقي الصفحة كما هو، وتفتحه نسخ التطبيق القديمة أيضاً.
+const GROUP_IDS = ["family", "work", "friends"];
+function b64urlBytes(raw) {
+  const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(b64 + "===".slice((b64.length + 3) % 4)), c => c.charCodeAt(0));
+}
+function bytesB64url(bytes) {
+  let s = "";
+  for (const x of bytes) s += String.fromCharCode(x);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function uncompact(raw) {
+  try {
+    const b = b64urlBytes(raw), utf8 = new TextDecoder();
+    let i = 0;
+    const next = () => { if (i >= b.length) throw 0; return b[i++]; };
+    const take = n => { if (i + n > b.length) throw 0; return b.subarray(i, i += n); };
+    const pad = n => String(n).padStart(2, "0");
+    const event = () => {
+      const days = next() << 8 | next(), flags = next();
+      const d = new Date(Date.UTC(1900, 0, 1) + (days | (flags >> 1 & 1) << 16) * 864e5);
+      const emoji = utf8.decode(take(flags >> 2));
+      const len = next(), end = i + len;
+      let name = "";
+      while (i < end) {
+        const c = next();
+        if (c === 1) name += utf8.decode(take(b[i] >= 0xF0 ? 4 : b[i] >= 0xE0 ? 3 : 2));
+        else name += String.fromCharCode(c < 0x80 ? c : 0x600 + c - 0x80);
+      }
+      if (i > end) throw 0;
+      return [name, d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()), emoji, flags & 1];
+    };
+    const kind = next();
+    if (kind === 1) {
+      const [n, d, e, y] = event();
+      const q = new URLSearchParams({ n, d, e });
+      if (y) q.set("y", "1");
+      return q;
+    }
+    if (kind === 2) {
+      const g = GROUP_IDS[next() - 1] || "";
+      const list = [];
+      while (i < b.length && list.length < MAX_GROUP) {
+        const [n, d, e, y] = event();
+        list.push(y ? [n, d, e, 1] : [n, d, e]);
+      }
+      return new URLSearchParams({ g, l: bytesB64url(new TextEncoder().encode(JSON.stringify(list))) });
+    }
+  } catch (_) {}
+  return new URLSearchParams();
+}
+
+const hash = location.hash.slice(1);
+const p = /^[A-Za-z0-9_-]+$/.test(hash) ? uncompact(hash) : new URLSearchParams(hash);
 const today = new Date(); today.setHours(0, 0, 0, 0);
 
 function show(id) { document.getElementById(id).hidden = false; }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>كم باقي؟ · حمّل التطبيق</title>
-<meta name="description" content="كم باقي؟ يعدّ لك الأيام للراتب ورمضان والعيد ومناسباتك.">
+<title>كم باقي؟ Kam Baqi · حمّل التطبيق</title>
+<meta name="description" content="كم باقي؟ يعدّ لك الأيام للراتب ورمضان والعيد ومناسباتك. Kam Baqi counts down to payday, Ramadan, Eid and your occasions.">
 <!--
   رابط «شارك التطبيق» في التطبيق (lib/strings.dart: appShareUrl).
   ينقل الآيفون إلى App Store والأندرويد إلى Google Play، ويعرض المتجرين على الكمبيوتر.
@@ -20,6 +20,9 @@
   .logo { font-size: 54px; line-height: 1.2; }
   h1 { margin: 6px 0 4px; font-size: 28px; }
   p { margin: 0; opacity: .9; }
+  h1 .en { display: block; font-size: 17px; font-weight: 600; opacity: .75; }
+  p.en { margin-top: 4px; font-size: 14px; opacity: .75; }
+  .free { margin-top: 16px; color: var(--muted); font-size: 14px; }
   .btn { display: block; margin-top: 14px; padding: 15px; border-radius: 16px; font-weight: 800; text-decoration: none;
          background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 </style>
@@ -28,9 +31,11 @@
 <main>
   <div class="card">
     <div class="logo">⏳</div>
-    <h1>كم باقي؟</h1>
+    <h1>كم باقي؟ <span class="en">Kam Baqi</span></h1>
     <p>يعدّ لك الأيام للراتب ورمضان والعيد ومناسباتك</p>
+    <p class="en" dir="ltr">Count down to payday, Ramadan, Eid and your own occasions</p>
   </div>
+  <div class="free">مجاني · Free</div>
   <a class="btn" id="ios" href="https://apps.apple.com/app/id6831896782">App Store</a>
   <a class="btn" id="android" href="https://play.google.com/store/apps/details?id=com.YK.kambaqi&referrer=utm_source%3Dshare_app">Google Play</a>
 </main>
